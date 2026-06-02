@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
+  <title>FastFit - Trainer Calendar</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "gold": "#e5c879", "gold-dark": "#c39451", "gold-light": "#f7eba2",
+            "pure-black": "#000000", "surface-black": "#0a0a0a", "surface-dark": "#111111",
+            "surface-medium": "#1a1a1a", "muted-white": "#f5f5f5", "muted-grey": "#a3a3a3",
+            "charcoal": "#1c1c1c", "charcoal-light": "#2a2a2a"
+          },
+          spacing: { "stack-md": "16px", "container-max": "1440px", "margin-desktop": "40px", "margin-mobile": "16px", "stack-lg": "32px", "stack-sm": "8px", "gutter": "24px" },
+          fontFamily: { "headline-xl": ["Hanken Grotesk"], "body-md": ["Hanken Grotesk"], "headline-lg": ["Hanken Grotesk"], "label-caps": ["JetBrains Mono"] },
+          fontSize: {
+            "label-caps": ["12px", { lineHeight: "16px", letterSpacing: "0.1em", fontWeight: "500" }],
+            "headline-xl": ["40px", { lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+            "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "600" }]
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="./style.css">
+  <!-- FULLSCREEN OVERRIDE — loads AFTER Tailwind, uses !important -->
+  <style>
+    [x-cloak], .hidden { display: none !important; }
+    html, body { margin: 0 !important; padding: 0 !important; height: 100% !important; overflow: hidden !important; }
+    body { display: flex !important; flex-direction: column !important; }
+    #fullScreenWrapper {
+      flex: 1 1 0% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      min-height: 0 !important;
+      height: 100vh !important;
+      height: 100dvh !important;
+      overflow: hidden !important;
+    }
+    #appContent {
+      flex: 1 1 0% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      min-height: 0 !important;
+      overflow: hidden !important;
+    }
+    #appContent > main {
+      flex: 1 1 0% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      min-height: 0 !important;
+      overflow: hidden !important;
+    }
+    .schedule-grid-container {
+      flex: 1 1 0% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      min-height: 0 !important;
+      overflow: hidden !important;
+    }
+    #scheduleGrid {
+      flex: 1 1 0% !important;
+      overflow-y: auto !important;
+      min-height: 0 !important;
+    }
+    /* Custom Scrollbar for dark theme */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Enhanced GPay Animation Styles */
+    .success-container.animate svg {
+      animation: svgPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.4s forwards;
+    }
+    .success-circle.animate {
+      animation: drawCircle 0.5s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+    }
+    .success-check.animate {
+      animation: drawCheck 0.4s cubic-bezier(0.65, 0, 0.45, 1) 0.4s forwards;
+    }
+    .success-glow.animate {
+      animation: glowPulse 1.5s ease-out 0.4s infinite alternate;
+    }
+    @keyframes drawCircle {
+      from { stroke-dashoffset: 283; }
+      to { stroke-dashoffset: 0; }
+    }
+    @keyframes drawCheck {
+      from { stroke-dashoffset: 100; }
+      to { stroke-dashoffset: 0; }
+    }
+    @keyframes svgPop {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.15); filter: drop-shadow(0 0 25px rgba(34,197,94,0.8)); }
+      100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(34,197,94,0.6)); }
+    }
+    @keyframes glowPulse {
+      0% { opacity: 0; transform: scale(0.8); }
+      20% { opacity: 0.4; transform: scale(1.2); }
+      100% { opacity: 0.2; transform: scale(1); }
+    }
+    .gpay-text-animate {
+      animation: textPopUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.5s forwards;
+    }
+    @keyframes textPopUp {
+      from { transform: scale(0.8) translateY(15px); opacity: 0; letter-spacing: -1px; }
+      to { transform: scale(1) translateY(0); opacity: 1; letter-spacing: normal; }
+    }
+    #confirmActionModal { background-color: #1a1a1a; }
+  </style>
+</head>
+
+<body class="bg-muted-white text-charcoal dark:bg-pure-black dark:text-muted-white font-body-md transition-colors duration-500">
+
+  <!-- FULL SCREEN WRAPPER -->
+  <div id="fullScreenWrapper">
+
+    <!-- LOADING OVERLAY -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-muted-white/80 dark:bg-pure-black/80 backdrop-blur-md z-[500] flex items-center justify-center w-full h-full overflow-hidden" style="transition: opacity 0.5s ease-out;">
+      <div class="loading-brand">
+        <img src="loadinGifIcon.gif" alt="Loading..." class="loading-gif" />
+      </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="appContent" class="pt-2 pb-2 md:pt-3 md:pb-4 w-full h-full flex flex-col flex-1">
+      <main class="px-3 sm:px-4 md:px-margin-desktop w-full max-w-container-max mx-auto h-full flex flex-col flex-1">
+
+        <!-- HEADING ROW -->
+        <div class="heading-row">
+          <h1 class="page-heading text-pure-black dark:text-white tracking-tight">Home Trainer <span class="text-gold-dark dark:text-gold">Bookings</span></h1>
+          <div class="heading-right-slot" id="headingRightSlot"></div>
+        </div>
+
+        <!-- FILTER BAR -->
+        <div class="filter-bar">
+          <div class="filter-bar-inner">
+            <div class="filter-item" id="filter-location" data-filter="location">
+              <label class="filter-label">Location</label>
+              <div class="custom-dropdown relative w-full">
+                <button type="button" class="dropdown-trigger w-full bg-transparent border-0 border-b border-gold/30 text-pure-black dark:text-white focus:ring-0 focus:border-gold text-left py-2 flex justify-between items-center transition-colors text-sm">
+                  <span class="selected-text">All Locations</span>
+                  <span class="material-symbols-outlined text-gold-dark dark:text-gold text-sm">expand_more</span>
+                </button>
+                <div class="dropdown-menu absolute z-50 w-full mt-2 bg-white dark:bg-[#1a1a1a] border border-gold/20 rounded-2xl shadow-2xl max-h-72 flex flex-col opacity-0 invisible translate-y-[-10px] scale-95 transition-all duration-300 ease-out origin-top overflow-hidden">
+                  <div class="p-3 border-b border-gold/10 relative bg-muted-white dark:bg-[#111]">
+                    <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-charcoal-light/50 dark:text-gold/50 text-[18px]">search</span>
+                    <input type="text" class="dropdown-search w-full bg-white dark:bg-pure-black border border-gold/20 text-pure-black dark:text-white rounded-full pl-9 pr-4 py-1.5 text-sm focus:outline-none focus:border-gold placeholder-gold/30" placeholder="Search location...">
+                  </div>
+                  <div class="dropdown-options overflow-y-auto flex-1 p-2 space-y-1"></div>
+                </div>
+              </div>
+            </div>
+            <div class="filter-item" id="filter-trainer" data-filter="trainer">
+              <label class="filter-label">Trainer</label>
+              <div class="custom-dropdown relative w-full">
+                <button type="button" class="dropdown-trigger w-full bg-transparent border-0 border-b border-gold/30 text-pure-black dark:text-white focus:ring-0 focus:border-gold text-left py-2 flex justify-between items-center transition-colors text-sm">
+                  <span class="selected-text">All Trainers</span>
+                  <span class="material-symbols-outlined text-gold-dark dark:text-gold text-sm">expand_more</span>
+                </button>
+                <div class="dropdown-menu absolute z-50 w-full mt-2 bg-white dark:bg-[#1a1a1a] border border-gold/20 rounded-2xl shadow-2xl max-h-72 flex flex-col opacity-0 invisible translate-y-[-10px] scale-95 transition-all duration-300 ease-out origin-top overflow-hidden">
+                  <div class="p-3 border-b border-gold/10 relative bg-muted-white dark:bg-[#111]">
+                    <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-charcoal-light/50 dark:text-gold/50 text-[18px]">search</span>
+                    <input type="text" class="dropdown-search w-full bg-white dark:bg-pure-black border border-gold/20 text-pure-black dark:text-white rounded-full pl-9 pr-4 py-1.5 text-sm focus:outline-none focus:border-gold placeholder-gold/30" placeholder="Search trainer...">
+                  </div>
+                  <div class="dropdown-options overflow-y-auto flex-1 p-2 space-y-1"></div>
+                </div>
+              </div>
+            </div>
+            <div class="filter-item" id="filter-service" data-filter="service">
+              <label class="filter-label">Service</label>
+              <div class="custom-dropdown relative w-full">
+                <button type="button" class="dropdown-trigger w-full bg-transparent border-0 border-b border-gold/30 text-pure-black dark:text-white focus:ring-0 focus:border-gold text-left py-2 flex justify-between items-center transition-colors text-sm">
+                  <span class="selected-text">All Services</span>
+                  <span class="material-symbols-outlined text-gold-dark dark:text-gold text-sm">expand_more</span>
+                </button>
+                <div class="dropdown-menu absolute z-50 w-full mt-2 bg-white dark:bg-[#1a1a1a] border border-gold/20 rounded-2xl shadow-2xl max-h-72 flex flex-col opacity-0 invisible translate-y-[-10px] scale-95 transition-all duration-300 ease-out origin-top overflow-hidden">
+                  <div class="p-3 border-b border-gold/10 relative bg-muted-white dark:bg-[#111]">
+                    <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-charcoal-light/50 dark:text-gold/50 text-[18px]">search</span>
+                    <input type="text" class="dropdown-search w-full bg-white dark:bg-pure-black border border-gold/20 text-pure-black dark:text-white rounded-full pl-9 pr-4 py-1.5 text-sm focus:outline-none focus:border-gold placeholder-gold/30" placeholder="Search service...">
+                  </div>
+                  <div class="dropdown-options overflow-y-auto flex-1 p-2 space-y-1"></div>
+                </div>
+              </div>
+            </div>
+            <div class="filter-item" id="filter-client" data-filter="client">
+              <label class="filter-label">Client</label>
+              <div class="custom-dropdown relative w-full">
+                <button type="button" class="dropdown-trigger w-full bg-transparent border-0 border-b border-gold/30 text-pure-black dark:text-white focus:ring-0 focus:border-gold text-left py-2 flex justify-between items-center transition-colors text-sm">
+                  <span class="selected-text">All Clients</span>
+                  <span class="material-symbols-outlined text-gold-dark dark:text-gold text-sm">expand_more</span>
+                </button>
+                <div class="dropdown-menu absolute z-50 w-full mt-2 bg-white dark:bg-[#1a1a1a] border border-gold/20 rounded-2xl shadow-2xl max-h-72 flex flex-col opacity-0 invisible translate-y-[-10px] scale-95 transition-all duration-300 ease-out origin-top overflow-hidden">
+                  <div class="p-3 border-b border-gold/10 relative bg-muted-white dark:bg-[#111]">
+                    <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-charcoal-light/50 dark:text-gold/50 text-[18px]">search</span>
+                    <input type="text" class="dropdown-search w-full bg-white dark:bg-pure-black border border-gold/20 text-pure-black dark:text-white rounded-full pl-9 pr-4 py-1.5 text-sm focus:outline-none focus:border-gold placeholder-gold/30" placeholder="Search client...">
+                  </div>
+                  <div class="dropdown-options overflow-y-auto flex-1 p-2 space-y-1"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CALENDAR CONTROLS: LEFT | CENTER | RIGHT -->
+        <div class="controls-row">
+          <div class="controls-left">
+            <div class="relative flex bg-white dark:bg-[#0f0a05] rounded-xl p-1 border border-gold/30 shrink-0" id="viewToggles">
+              <div id="viewToggleSlider" class="absolute top-[4px] bottom-[4px] left-0 gold-gradient-bg rounded-lg transition-all duration-300 ease-out shadow-sm z-0"></div>
+              <button class="view-toggle-btn relative z-10 py-1.5 text-label-caps font-label-caps text-muted-grey hover:text-gold rounded-lg transition-colors duration-300" data-view="month">Month</button>
+              <button class="view-toggle-btn relative z-10 py-1.5 text-label-caps font-label-caps text-muted-grey hover:text-gold rounded-lg transition-colors duration-300" data-view="week">Week</button>
+              <button class="view-toggle-btn relative z-10 py-1.5 text-label-caps font-label-caps text-pure-black font-bold rounded-lg transition-colors duration-300" data-view="day">Day</button>
+            </div>
+          </div>
+
+          <div class="controls-center">
+            <div class="date-nav">
+              <button id="prevDateBtn" class="nav-arrow-btn text-gold-dark dark:text-gold hover:opacity-80 transition-opacity select-none">
+                <span class="material-symbols-outlined text-xl md:text-2xl">chevron_left</span>
+              </button>
+              <div class="relative" id="calendarDateWrapper">
+                <div id="calendarDateToggle" class="flex items-center justify-center gap-1 cursor-pointer hover:opacity-80 transition-opacity">
+                  <h2 id="currentDateDisplay" class="date-display text-gold-dark dark:text-gold select-none">October 24, 2023</h2>
+                  <span class="material-symbols-outlined text-gold-dark dark:text-gold select-none text-base md:text-xl">arrow_drop_down</span>
+                </div>
+                <div id="calendarDropdown" class="calendar-dropdown hidden">
+                  <div class="flex items-center justify-between px-4 pt-3 pb-1">
+                    <button id="calPopupPrev" class="text-gold-dark dark:text-gold hover:opacity-80 select-none"><span class="material-symbols-outlined text-xl">chevron_left</span></button>
+                    <h3 id="calPopupTitle" class="text-gold-dark dark:text-gold text-base font-bold select-none">May 2026</h3>
+                    <button id="calPopupNext" class="text-gold-dark dark:text-gold hover:opacity-80 select-none"><span class="material-symbols-outlined text-xl">chevron_right</span></button>
+                  </div>
+                  <p class="text-center text-charcoal-light/50 dark:text-gold/40 text-[9px] font-label-caps tracking-widest mb-1 select-none">Select a date</p>
+                  <div class="grid grid-cols-7 px-3 mb-1 select-none">
+                    <div class="text-center text-gold-dark dark:text-gold text-[9px] font-bold py-1">MON</div>
+                    <div class="text-center text-gold-dark dark:text-gold text-[9px] font-bold py-1">TUE</div>
+                    <div class="text-center text-gold-dark dark:text-gold text-[9px] font-bold py-1">WED</div>
+                    <div class="text-center text-gold-dark dark:text-gold text-[9px] font-bold py-1">THU</div>
+                    <div class="text-center text-gold-dark dark:text-gold text-[9px] font-bold py-1">FRI</div>
+                    <div class="text-center text-gold-dark dark:text-gold text-[9px] font-bold py-1">SAT</div>
+                    <div class="text-center text-gold-dark dark:text-gold text-[9px] font-bold py-1">SUN</div>
+                  </div>
+                  <div id="calPopupGrid" class="grid grid-cols-7 gap-1 px-3 pb-3 select-none"></div>
+                </div>
+              </div>
+              <button id="nextDateBtn" class="nav-arrow-btn text-gold-dark dark:text-gold hover:opacity-80 transition-opacity select-none">
+                <span class="material-symbols-outlined text-xl md:text-2xl">chevron_right</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- RIGHT: Info Icon + Theme Toggle -->
+          <div class="controls-right">
+            <div class="relative" id="infoIconWrapper">
+              <button id="infoIconBtn" class="info-icon-btn" title="Status Legend">
+                <span class="material-symbols-outlined text-gold-dark dark:text-gold text-xl">info</span>
+              </button>
+              <div id="infoPopup" class="info-popup hidden">
+                <div class="info-popup-header">
+                  <span class="text-gold-dark dark:text-gold font-bold text-sm">Status Legend</span>
+                  <button id="closeInfoPopup" class="text-muted-grey hover:text-white transition-colors"><span class="material-symbols-outlined text-lg">close</span></button>
+                </div>
+                <div class="info-popup-body" id="infoPopupBody">
+                  <!-- Generated by JS -->
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 cursor-pointer select-none shrink-0" id="themeToggleWrapper">
+              <div class="relative w-[56px] h-[28px] rounded-full border-[2px] border-gold/40 bg-pure-black overflow-hidden transition-all duration-300" id="themeTogglePill">
+                <div id="darkThemeBg" class="absolute inset-0 transition-opacity duration-300">
+                  <div class="absolute top-[5px] left-[8px] w-[3px] h-[3px] bg-gold rounded-full shadow-[0_0_4px_#e5c879]"></div>
+                  <div class="absolute top-[16px] left-[11px] w-[2px] h-[2px] bg-gold/80 rounded-full"></div>
+                  <div class="absolute top-[8px] left-[18px] w-[3px] h-[3px] bg-gold rounded-full shadow-[0_0_2px_#e5c879]"></div>
+                  <div class="absolute top-[17px] left-[22px] w-[3px] h-[3px] bg-gold/90 rounded-full"></div>
+                </div>
+                <div id="lightThemeBg" class="absolute inset-0 bg-charcoal-light transition-opacity duration-300 opacity-0">
+                  <div class="absolute top-[6px] right-[8px] w-[10px] h-[3px] bg-gold/40 rounded-full"></div>
+                  <div class="absolute top-[14px] right-[11px] w-[12px] h-[3px] bg-gold/30 rounded-full"></div>
+                </div>
+                <div id="themeToggleKnob" class="absolute top-[0px] left-[0px] w-[24px] h-[24px] rounded-full bg-gold transition-transform duration-300 flex items-center justify-center translate-x-[28px]">
+                  <span id="themeToggleIcon" class="material-symbols-outlined text-pure-black text-[14px]">dark_mode</span>
+                </div>
+              </div>
+              <span class="font-bold text-gold-dark dark:text-gold text-xs tracking-wide hidden lg:inline" id="themeToggleText">Dark Mode</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SCHEDULE GRID — fills all remaining screen space -->
+        <div class="schedule-grid-container">
+          <div id="scheduleGrid" class="space-y-1 relative z-10"></div>
+        </div>
+
+      </main>
+    </div>
+
+  </div><!-- /fullScreenWrapper -->
+
+  <!-- MAIN BOOKING MODAL (SLIDE-OUT ACTION QUICK-CARD) -->
+  <div id="bookingModal" class="fixed inset-0 bg-pure-black/80 backdrop-blur-md z-[1000] hidden flex items-center justify-center opacity-0 transition-opacity duration-300 p-4">
+    
+    <!-- Split-Screen Container -->
+    <div class="relative flex flex-col md:flex-row bg-white dark:bg-[#1a1a1a] border border-charcoal-light/10 dark:border-[#2a2a2a] rounded-xl shadow-2xl overflow-hidden transform scale-95 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] opacity-0 max-h-[90vh] overflow-y-auto custom-scrollbar md:overflow-visible" id="bookingModalInner">
+      
+      <!-- GLOBAL CLOSE BUTTON -->
+      <button id="closeModalBtn" class="absolute top-2 right-3 z-50 w-7 h-7 flex items-center justify-center rounded-full bg-pure-black/5 dark:bg-white/5 hover:bg-pure-black/10 dark:hover:bg-white/20 text-pure-black/40 dark:text-white/40 hover:text-pure-black dark:hover:text-white transition-all border border-pure-black/5 dark:border-white/5 shadow-md backdrop-blur-sm">
+        <span class="material-symbols-outlined text-[16px]">close</span>
+      </button>
+
+      <!-- LEFT PANEL: Master View (Always Visible) -->
+      <div class="w-full md:w-[340px] shrink-0 flex flex-col z-10 bg-white dark:bg-[#1a1a1a] relative border-b md:border-b-0 md:border-r border-transparent transition-colors duration-500" id="modalLeftPanel">
+        
+        <!-- Header -->
+        <div class="px-4 flex items-center border-b border-charcoal-light/10 dark:border-[#2a2a2a] bg-white dark:bg-[#1a1a1a] shrink-0 h-[44px]">
+          <div class="flex items-center gap-2">
+            <div class="w-1.5 h-1.5 rounded-full bg-[#c39451] animate-pulse shadow-[0_0_8px_#c39451]"></div>
+            <span class="text-[10px] font-bold tracking-widest uppercase text-[#c39451]" id="modalStatusBadge">STATUS</span>
+          </div>
+        </div>
+
+        <!-- Ultra-Compact Body for Left Panel -->
+        <div class="flex flex-col">
+          <!-- 1. USER PROFILE (Left Side Top) -->
+          <div class="px-4 py-3 border-b border-charcoal-light/10 dark:border-[#2a2a2a] bg-white dark:bg-[#1a1a1a]">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-full bg-muted-white dark:bg-[#111] flex items-center justify-center shrink-0 border border-charcoal-light/10 dark:border-white/5 relative overflow-hidden">
+               <div class="absolute inset-0 bg-gradient-to-b from-blue-500/20 to-transparent opacity-50"></div>
+               <span class="material-symbols-outlined text-pure-black/80 dark:text-white/80 text-[24px] relative z-10">person</span>
+            </div>
+            <div class="flex flex-col">
+              <h3 class="text-[16px] font-medium text-pure-black dark:text-white tracking-wide" id="modalClientNameHeader">Client Name</h3>
+              <div class="flex items-center gap-1.5 text-[#e5c879] mt-0.5">
+                <span class="material-symbols-outlined text-[13px]">light_mode</span>
+                <span class="text-[11px] font-medium" id="modalDetailTime">09:40 PM - 11:00 pm</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. BOOKING INFO (Left Side Middle) -->
+        <div class="px-4 py-2 bg-white dark:bg-[#1a1a1a]">
+          <div class="space-y-0.5">
+            <h4 class="text-[9px] font-bold tracking-widest uppercase text-charcoal-light/50 dark:text-white/40 mb-2 px-1">Booking Info</h4>
+            <div class="flex items-center justify-between px-1 py-1.5 border-b border-charcoal-light/10 dark:border-white/5">
+              <span class="text-[11px] text-charcoal-light/70 dark:text-white/50">Date</span>
+              <span class="text-[11px] text-pure-black dark:text-white font-medium" id="modalDetailDate">19 May 2026</span>
+            </div>
+            <div class="flex items-center justify-between px-1 py-1.5 border-b border-charcoal-light/10 dark:border-white/5">
+              <span class="text-[11px] text-charcoal-light/70 dark:text-white/50">Service</span>
+              <span class="text-[11px] text-pure-black dark:text-white font-medium truncate max-w-[150px] text-right" id="modalDetailService">EMS Intro</span>
+            </div>
+            <div class="flex items-center justify-between px-1 py-1.5 border-b border-charcoal-light/10 dark:border-white/5">
+              <span class="text-[11px] text-charcoal-light/70 dark:text-white/50">Trainer</span>
+              <span class="text-[11px] text-pure-black dark:text-white font-medium truncate max-w-[150px] text-right" id="modalDetailTrainer">Nada Alshehry</span>
+            </div>
+            <div class="flex items-center justify-between px-1 py-1.5 border-b border-charcoal-light/10 dark:border-white/5">
+              <span class="text-[11px] text-charcoal-light/70 dark:text-white/50">Notes</span>
+              <span class="text-[11px] text-pure-black dark:text-white font-medium truncate max-w-[150px] text-right" id="modalDetailNotes">None</span>
+            </div>
+            <span id="modalDetailNotesIcon" class="hidden"></span>
+          </div>
+        </div>
+
+        <!-- 3. ACTIONS GRID (Left Side Bottom) -->
+        <div class="border-t border-charcoal-light/10 dark:border-[#2a2a2a]">
+          <div class="grid grid-cols-3 bg-white dark:bg-[#1a1a1a]" id="modalButtonsContainer">
+            <!-- Generated by JS -->
+          </div>
+        </div>
+        </div><!-- End Compact Body -->
+
+        <!-- Full Details Toggle -->
+        <button id="toggleDetailsBtn" class="w-full py-2.5 border-t border-charcoal-light/10 dark:border-[#2a2a2a] text-charcoal-light/70 dark:text-white/60 hover:text-pure-black dark:hover:text-white text-[11px] font-bold tracking-wide transition-colors flex items-center justify-center gap-2 bg-muted-white dark:bg-[#141414] hover:bg-gold/10 dark:hover:bg-[#222] shrink-0">
+          Full CRM Details <span class="material-symbols-outlined text-[14px] transition-transform duration-300" id="toggleDetailsIcon">arrow_forward</span>
+        </button>
+
+      </div>
+
+      <!-- RIGHT PANEL: Full Details Slide-Out -->
+      <div id="fullDetailsSection" class="max-h-0 md:max-h-none md:w-0 opacity-0 overflow-hidden shrink-0 flex flex-col bg-muted-white dark:bg-[#111111] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">
+        
+        <!-- Fixed width inner container prevents text reflow during slide animation -->
+        <div class="w-full md:w-[340px] flex-1 flex flex-col h-full">
+          
+          <!-- Right Panel Header -->
+          <div class="px-4 flex items-center border-b border-charcoal-light/10 dark:border-[#2a2a2a] bg-muted-white dark:bg-[#111] shrink-0 h-[44px]">
+            <span class="text-[10px] font-bold tracking-widest uppercase text-charcoal-light/50 dark:text-white/50">Client Profile Details</span>
+          </div>
+
+          <div class="p-4 flex-1">
+            <!-- Dynamic Client Data -->
+            <div class="space-y-1">
+              <h4 class="text-[9px] font-bold tracking-widest uppercase text-charcoal-light/50 dark:text-white/40 mb-3 px-1">CRM Data</h4>
+              <div id="clientDetailsTable" class="flex flex-col">
+                 <!-- Generated by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Command Box Footer -->
+          <div class="p-3 border-t border-charcoal-light/10 dark:border-[#2a2a2a] bg-white dark:bg-[#161616]">
+            <div class="relative flex items-center">
+              <span class="material-symbols-outlined absolute left-3 text-charcoal-light/40 dark:text-white/30 text-[16px]">terminal</span>
+              <input type="text" placeholder="Type command or add note..." class="w-full bg-muted-white dark:bg-[#0a0a0a] border border-charcoal-light/20 dark:border-[#333] rounded-lg py-1.5 pl-9 pr-10 text-[11px] text-pure-black dark:text-white focus:outline-none focus:border-[#c39451] transition-colors placeholder:text-charcoal-light/40 dark:placeholder:text-white/30 shadow-inner">
+              <button class="absolute right-2 w-6 h-6 flex items-center justify-center rounded-md bg-gold/10 dark:bg-[#222] hover:bg-gold-dark dark:hover:bg-[#c39451] text-gold-dark dark:text-white/50 hover:text-white dark:hover:text-black transition-colors">
+                 <span class="material-symbols-outlined text-[14px]">arrow_upward</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PREMIUM CONFIRM ACTION MODAL -->
+  <div id="confirmActionModal" class="fixed inset-0 bg-pure-black/80 backdrop-blur-md z-[1100] hidden flex items-center justify-center opacity-0 transition-opacity duration-300 p-4">
+     <!-- Modal Container -->
+    <div class="relative w-full max-w-[360px] transform scale-95 transition-all duration-300 opacity-0 bg-gradient-to-b from-white to-muted-white dark:from-[#1e1e1e] dark:to-[#121212] border border-charcoal-light/10 dark:border-white/10 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden" id="confirmActionModalInner">
+      
+      <!-- GPAY SUCCESS OVERLAY (Inside Confirm Modal) -->
+      <div id="gpaySuccessOverlay" class="absolute inset-0 bg-[#0a0a0a]/85 backdrop-blur-sm z-[2000] hidden flex-col items-center justify-center opacity-0 transition-opacity duration-500">
+         <div class="relative w-24 h-24 flex items-center justify-center mb-4 success-container">
+            <div class="absolute inset-0 bg-green-500 rounded-full blur-[30px] opacity-0 success-glow"></div>
+            <svg class="absolute inset-0 w-full h-full text-green-500 drop-shadow-[0_0_15px_rgba(34,197,94,0.6)]" viewBox="0 0 100 100">
+               <circle class="success-circle" cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="6" stroke-dasharray="283" stroke-dashoffset="283" />
+               <path class="success-check" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="100" stroke-dashoffset="100" d="M 30 50 L 45 65 L 70 35" />
+            </svg>
+         </div>
+         <h2 class="text-3xl font-extrabold text-white tracking-tight transform scale-75 opacity-0 text-center" id="successAnimationText">Confirmed!</h2>
+      </div>
+      
+      <!-- Header content -->
+      <div class="px-6 pt-6 pb-4 flex flex-col items-center text-center relative shrink-0 overflow-hidden">
+        <!-- Background Glow -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] h-32 bg-[#c39451]/10 blur-[50px] rounded-full pointer-events-none"></div>
+
+        <!-- Close Button -->
+        <button id="cancelConfirmActionBtn" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-pure-black/5 dark:bg-black/20 hover:bg-pure-black/10 dark:hover:bg-black/40 text-pure-black/40 dark:text-white/50 hover:text-pure-black dark:hover:text-white transition-all border border-pure-black/5 dark:border-white/5 backdrop-blur-md">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+        
+        <!-- Icon -->
+        <div class="w-14 h-14 rounded-full bg-gradient-to-b from-[#c39451]/20 to-transparent border border-[#c39451]/30 flex items-center justify-center mb-3 shadow-[0_0_30px_rgba(195,148,81,0.15)] relative">
+          <span class="material-symbols-outlined text-[#c39451] text-[28px] drop-shadow-md z-10">task_alt</span>
+        </div>
+        <h3 class="text-xl font-extrabold text-pure-black dark:text-white tracking-tight mb-1" id="confirmActionTitleText">Action Required</h3>
+        <p class="text-charcoal-light/50 dark:text-white/40 text-[10px] tracking-widest uppercase font-medium" id="confirmActionSubtitle">Please Review Details</p>
+      </div>
+
+      <!-- Ultra-Compact Body -->
+      <div class="px-6 pb-2 flex flex-col gap-3 relative z-10">
+        
+        <!-- Client Card (Floating) -->
+        <div class="bg-pure-black/[0.03] dark:bg-white/[0.03] border border-charcoal-light/10 dark:border-white/5 rounded-2xl p-3 flex items-center gap-3 shadow-lg backdrop-blur-sm">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-[#c39451] to-[#e5c879] flex items-center justify-center text-black font-extrabold text-sm shadow-[0_4px_10px_rgba(195,148,81,0.3)] shrink-0" id="confirmActionInitials">
+            SA
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-pure-black dark:text-white font-bold text-[14px] truncate tracking-wide" id="confirmActionTitle">Saleh Alsnedi</div>
+            <div class="text-[#c39451] text-[10px] font-bold tracking-widest uppercase truncate mt-0.5" id="confirmActionService">EMS Basic</div>
+          </div>
+        </div>
+        
+        <!-- Details Block -->
+        <div class="bg-pure-black/5 dark:bg-black/20 rounded-2xl p-3 border border-charcoal-light/10 dark:border-white/5 space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 text-pure-black/40 dark:text-white/40">
+              <span class="material-symbols-outlined text-[14px]">schedule</span>
+              <span class="text-[11px] font-medium tracking-wide">Time</span>
+            </div>
+            <span class="text-[11px] text-pure-black dark:text-white font-bold tracking-wide" id="confirmActionDateTime">20 May, 15:20 - 16:00</span>
+          </div>
+          <div class="w-full h-px bg-charcoal-light/10 dark:bg-white/5"></div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 text-pure-black/40 dark:text-white/40">
+              <span class="material-symbols-outlined text-[14px]">person</span>
+              <span class="text-[11px] font-medium tracking-wide">Trainer</span>
+            </div>
+            <span class="text-[11px] text-pure-black dark:text-white font-bold tracking-wide truncate max-w-[140px]" id="confirmActionTrainer">Mohammed Aldaham</span>
+          </div>
+          <div class="w-full h-px bg-charcoal-light/10 dark:bg-white/5"></div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 text-pure-black/40 dark:text-white/40">
+              <span class="material-symbols-outlined text-[14px]">sync</span>
+              <span class="text-[11px] font-medium tracking-wide">Status</span>
+            </div>
+            <div class="text-[11px] text-pure-black dark:text-white font-bold tracking-wide flex items-center gap-1.5" id="confirmActionStatus">
+               <span class="w-1.5 h-1.5 rounded-full bg-[#c39451] animate-pulse shadow-[0_0_8px_#c39451]"></span> Scheduled
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Toggle -->
+        <div class="bg-pure-black/[0.02] dark:bg-white/[0.02] border border-charcoal-light/10 dark:border-white/5 rounded-2xl p-3 flex justify-between items-center cursor-pointer hover:bg-pure-black/[0.04] dark:hover:bg-white/[0.04] transition-colors shadow-sm group" onclick="document.getElementById('clientConfirmedToggle').click()">
+          <div class="flex flex-col gap-0.5">
+            <span class="text-pure-black/90 dark:text-white/90 text-[12px] font-bold tracking-wide group-hover:text-[#c39451] transition-colors">Client Confirmation</span>
+            <span class="text-pure-black/40 dark:text-white/40 text-[9px] uppercase tracking-wider">Mark verbally confirmed</span>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer pointer-events-none shrink-0">
+            <input type="checkbox" id="clientConfirmedToggle" class="sr-only peer">
+            <div class="w-10 h-5 bg-black/10 dark:bg-black/50 border border-pure-black/10 dark:border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-charcoal-light/20 dark:after:border-white after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-[#c39451] peer-checked:to-[#e5c879] peer-checked:border-[#c39451]"></div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="p-6 pt-3 shrink-0 relative z-10">
+        <button id="submitConfirmActionBtn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#c39451] to-[#e5c879] text-black text-[12px] font-extrabold tracking-wide transition-all shadow-[0_8px_20px_rgba(195,148,81,0.3)] hover:shadow-[0_8px_30px_rgba(195,148,81,0.5)] hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
+          Confirm Action <span class="material-symbols-outlined text-[16px] font-bold">check_circle</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FULL SCREEN HOUR TIMELINE MODAL -->
+  <div id="fullScreenHourTimelineModal" class="fixed inset-0 bg-muted-white dark:bg-[#0a0a0a] z-[2000] hidden flex-col opacity-0 transition-opacity duration-300">
+    <!-- Header -->
+    <div class="px-4 py-4 md:px-6 md:py-6 border-b border-gold/10 flex items-center justify-between bg-white dark:bg-[#111] shrink-0 shadow-sm z-10">
+      <div class="flex items-center gap-4">
+        <button id="closeHourTimelineBtn" class="w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-charcoal dark:text-white transition-all">
+          <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+        </button>
+        <div class="flex flex-col">
+          <h2 class="text-xl md:text-2xl font-extrabold text-charcoal dark:text-white tracking-tight" id="hourTimelineTitle">10:00 AM - 11:00 AM</h2>
+          <p class="text-[12px] font-bold tracking-widest uppercase text-gold-dark dark:text-gold" id="hourTimelineDate">October 24, 2023</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline Body -->
+    <div class="flex-1 overflow-y-auto p-4 md:p-8 relative custom-scrollbar">
+      <div class="max-w-5xl mx-auto w-full relative" id="hourTimelineContainer">
+        <!-- Vertical Timeline Line (Desktop) -->
+        <div class="absolute left-[100px] top-4 bottom-4 w-px bg-gold/20 hidden md:block"></div>
+        
+        <!-- Dynamically Generated Content -->
+        <div id="hourTimelineContent" class="space-y-8 md:space-y-12">
+          <!-- Timeline Groups will be injected here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Event listener for the close button
+    document.addEventListener('DOMContentLoaded', () => {
+      const closeBtn = document.getElementById('closeHourTimelineBtn');
+      if(closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          const modal = document.getElementById('fullScreenHourTimelineModal');
+          if(modal) {
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+              modal.classList.add('hidden');
+            }, 300);
+          }
+        });
+      }
+    });
+  </script>
+
+  <script src="./script.js"></script>
+</body>
+</html>
